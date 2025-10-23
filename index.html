@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lommepenge Ugeplan</title>
+<!-- Vi henter en pixel-font fra Google, der ligner Minecraft -->
+<link href="https://www.google.com/search?q=https://fonts.googleapis.com/css2%3Ffamily%3DPress%2BStart%2B2P%26display%3Dswap" rel="stylesheet">
+
+<style>
+    /* Grundlæggende indstillinger */
+    :root {
+        --font-pixel: 'Press+Start+2P', cursive;
+        --color-dark-bg: #3E3E3E;
+        --color-medium-bg: #5A5A5A;
+        --color-light-bg: #8B8B8B;
+        --color-dark-border: #222222;
+        --color-text-light: #FFFFFF;
+        --color-text-dark: #000000;
+        --color-text-accent: #FFFF55; /* Minecraft Gul */
+        --color-carl-bille: #55FFFF;   /* Cyan */
+        --color-noah: #55FF55;         /* Grøn */
+        --color-fri: #AAAAAA;
+        --color-done: #00AA00;
+        --color-done-dark: #387D38;
+        --color-missed: #AA0000;
+        --color-missed-dark: #7D3838;
+    }
+
+    body {
+        font-family: var(--font-pixel);
+        background-color: var(--color-dark-bg);
+        color: var(--color-text-light);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* Start i toppen */
+        min-height: 100vh;
+        padding: 20px;
+        box-sizing: border-box; 
+    }
+
+    /* Fjerner "pilene" på tal-input */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    /* Selve app-containeren */
+    .app-container {
+        width: 100%;
+        max-width: 1000px;
+        background-color: var(--color-medium-bg);
+        border: 5px solid var(--color-dark-border);
+        box-shadow: 0 0 0 5px var(--color-light-bg), 0 0 15px 10px rgba(0,0,0,0.5); /* Giver "blok"-effekt */
+        padding: 20px;
+    }
+
+    header {
+        text-align: center;
+        border-bottom: 5px solid var(--color-dark-border);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    header h1 {
+        font-size: 2.2rem; /* Lidt mindre på mobil */
+        color: var(--color-text-accent);
+        text-shadow: 3px 3px var(--color-text-dark);
+        margin: 0;
+    }
+
+    .week-selector {
+        font-size: 1rem;
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .week-selector label {
+        font-size: 1.2rem;
+    }
+
+    .week-selector input {
+        font-family: var(--font-pixel);
+        width: 70px;
+        padding: 10px;
+        font-size: 1.2rem;
+        text-align: center;
+        background-color: #DDDDDD;
+        border: 3px solid var(--color-dark-border);
+        color: var(--color-text-dark);
+        border-radius: 0; /* Vigtigt for pixel-look */
+        -webkit-appearance: none;
+    }
+
+    /* Kalender-gitteret */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr); /* Altid 7 kolonner */
+        gap: 10px;
+    }
+
+    /* Kort for hver dag */
+    .day-card {
+        background-color: var(--color-light-bg);
+        border: 4px solid var(--color-dark-border);
+        padding: 10px;
+        box-shadow: inset 0 0 0 3px var(--color-medium-bg); /* Indre skygge for dybde */
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .day-card h2 {
+        font-size: 0.9rem;
+        color: var(--color-text-accent);
+        text-shadow: 2px 2px var(--color-text-dark);
+        margin-top: 0;
+        margin-bottom: 10px;
+        border-bottom: 3px solid var(--color-dark-border);
+        padding-bottom: 10px;
+        text-align: center;
+    }
+    
+    .day-card .assigned {
+        font-size: 0.8rem;
+        margin-bottom: 15px;
+        flex-grow: 1; /* Sørger for at knapper skubbes ned */
+    }
+
+    .day-card .assigned .name-display {
+        cursor: pointer;
+        padding: 5px;
+        display: block; /* Gør hele navnet klikbart */
+        transition: background-color 0.2s;
+        white-space: nowrap; /* Tvinger navnet til at stå på én linje */
+    }
+    .day-card .assigned .name-display:hover {
+        background-color: rgba(255,255,255,0.2);
+    }
+
+    /* Navnefarver */
+    .name-display.carl-bille { color: var(--color-carl-bille); }
+    .name-display.noah { color: var(--color-noah); }
+    .name-display.fri { 
+        color: var(--color-fri); 
+        cursor: default;
+    }
+    .name-display.fri:hover {
+        background-color: transparent;
+    }
+
+
+    /* Knapper */
+    .btn {
+        font-family: var(--font-pixel);
+        font-size: 0.7rem;
+        padding: 10px 8px;
+        border: 3px solid var(--color-dark-border);
+        cursor: pointer;
+        margin: 5px 0;
+        display: block;
+        width: 100%;
+        box-shadow: 0 4px var(--color-text-dark); /* Giver knappen 3D-effekt */
+        position: relative;
+        top: 0;
+        transition: all 0.05s ease-out;
+        border-radius: 0;
+        -webkit-appearance: none;
+    }
+
+    .btn:active {
+        top: 4px; /* Tryk-effekt */
+        box-shadow: 0 0px var(--color-text-dark);
+    }
+
+    .btn-done {
+        background-color: var(--color-done);
+        color: white;
+    }
+
+    .btn-missed {
+        background-color: var(--color-missed);
+        color: white;
+    }
+
+    .btn-reset {
+         background-color: #AAAAAA;
+         color: var(--color-text-dark);
+         font-size: 0.6rem;
+         padding: 8px;
+    }
+
+    /* Skjul knapper for "Fri" dage */
+    .day-card.fri-day .task-status {
+        display: none;
+    }
+
+    /* Status når en opgave er valgt */
+    .day-card.status-done {
+        background-color: var(--color-done-dark);
+    }
+    .day-card.status-missed {
+        background-color: var(--color-missed-dark);
+    }
+
+    /* Vis kun "Nulstil" knap når status er sat */
+    .day-card:not(.status-done):not(.status-missed) .btn-reset {
+        display: none;
+    }
+    .day-card.status-done .btn-done,
+    .day-card.status-done .btn-missed,
+    .day-card.status-missed .btn-done,
+    .day-card.status-missed .btn-missed {
+        display: none;
+    }
+
+
+    /* Footer med opsummering */
+    footer {
+        display: flex;
+        flex-direction: column; /* Stak på mobil */
+        gap: 15px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 5px solid var(--color-dark-border);
+    }
+    
+    .summary-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .summary-box {
+        background-color: var(--color-medium-bg);
+        border: 4px solid var(--color-dark-border);
+        padding: 15px;
+        flex-basis: 48%; /* Tager ca. halvdelen af pladsen hver */
+        box-shadow: 0 0 0 3px var(--color-light-bg);
+    }
+
+    .summary-box h3 {
+        margin-top: 0;
+        font-size: 1rem;
+        text-shadow: 2px 2px var(--color-text-dark);
+    }
+    #carl-bille-box h3 { color: var(--color-carl-bille); }
+    #noah-box h3 { color: var(--color-noah); }
+
+    .saldo {
+        font-size: 0.8rem;
+        margin: 10px 0;
+    }
+    .saldo.total {
+        font-size: 1rem;
+        font-weight: bold;
+    }
+    
+    .log-controls {
+        text-align: center;
+        margin-top: 10px;
+    }
+    
+    .btn-log {
+        background-color: var(--color-text-accent);
+        color: var(--color-text-dark);
+        padding: 15px 20px;
+        font-size: 0.9rem;
+        width: auto;
+        display: inline-block;
+    }
+
+    /* Log Modal (Pop-up) */
+    .modal {
+        display: none; /* Skjult som standard */
+        position: fixed;
+        z-index: 100;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.7);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        font-family: var(--font-pixel);
+        background-color: var(--color-medium-bg);
+        margin: 5% auto;
+        padding: 20px;
+        border: 5px solid var(--color-dark-border);
+        box-shadow: 0 0 0 5px var(--color-light-bg);
+        width: 90%;
+        max-width: 700px;
+        color: var(--color-text-light);
+    }
+    
+    .modal-content h2 {
+        color: var(--color-text-accent);
+        text-shadow: 2px 2px var(--color-text-dark);
+        border-bottom: 3px solid var(--color-dark-border);
+        padding-bottom: 10px;
+    }
+
+    .close-btn {
+        color: #aaa;
+        float: right;
+        font-size: 38px;
+        font-weight: bold;
+        line-height: 1;
+        padding: 0 5px;
+    }
+
+    .close-btn:hover,
+    .close-btn:focus {
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    
+    #log-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 400px;
+        overflow-y: auto;
+        font-size: 0.7rem;
+        border: 3px solid var(--color-dark-border);
+        background-color: var(--color-dark-bg);
+    }
+    
+    #log-list li {
+        padding: 10px 15px;
+        border-bottom: 2px solid var(--color-dark-border);
+    }
+    
+    #log-list li:nth-child(even) {
+        background-color: var(--color-medium-bg);
+    }
+    
+    #log-list li .log-time {
+        color: var(--color-text-accent);
+        display: block;
+        font-size: 0.6rem;
+        margin-bottom: 5px;
+    }
+    
+    #log-list li.log-missed {
+        background-color: var(--color-missed-dark);
+    }
+    
+    #log-list li.log-corrected {
+        background-color: var(--color-done-dark);
+    }
+    
+    #log-list li.log-missed:nth-child(even) {
+        background-color: #5a2a2a; /* Lidt lysere rød */
+    }
+    
+    #log-list li.log-corrected:nth-child(even) {
+        background-color: #2a5a2a; /* Lidt lysere grøn */
+    }
+
+    /* Styling til status-beskeder (offline, loading) */
+    #status-bar {
+        text-align: center;
+        padding: 15px;
+        font-size: 0.9rem;
+        display: none; /* Skjult som standard */
+        margin-bottom: 15px;
+        border: 4px solid var(--color-dark-border);
+    }
+    
+    #status-bar.loading {
+        display: block;
+        background-color: var(--color-medium-bg);
+        color: var(--color-text-light);
+    }
+    
+    #status-bar.offline {
+        display: block;
+        background-color: var(--color-text-accent);
+        color: var(--color-text-dark);
+        text-shadow: 1px 1px var(--color-dark-border);
+    }
+    
+    #status-bar.error {
+        display: block;
+        background-color: var(--color-missed);
+        color: var(--color-text-light);
+        text-shadow: 1px 1px var(--color-text-dark);
+    }
+
+    /* Media Queries for mobil */
+    @media (max-width: 800px) {
+        .calendar-grid {
+            /* Skift til 2 kolonner på mindre skærme */
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .day-card {
+            min-height: 180px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        body {
+            padding: 5px;
+        }
+        .app-container {
+            padding: 10px;
+        }
+        header h1 {
+            font-size: 1.8rem;
+        }
+        /* Skift til 1 kolonne på de mindste skærme */
+        .calendar-grid {
+            grid-template-columns: 1fr;
+        }
+        .summary-container {
+            flex-direction: column; /* Stak også summary-boksene */
+        }
+        .modal-content {
+            width: 95%;
+            padding: 10px;
+            margin-top: 20px;
+        }
+    }
+</style>
+
+
+</head>
+<body>
+
+<!-- Importer Firebase moduler -->
+<!-- Vi bruger 'defer' for at sikre, at de er loadet, før vores script kører -->
+<script type="module" defer>
+    try {
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+        const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Validering af config
+        if (appId === 'default-app-id' || firebaseConfigStr === '{}' || !authToken) {
+            throw new Error("Firebase config mangler. Starter i offline-tilstand.");
+        }
+        
+        const firebaseConfig = JSON.parse(firebaseConfigStr);
+
+        // Importer kun de nødvendige funktioner
+        const { initializeApp, setLogLevel } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+        const { getAuth, signInWithCustomToken, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+        const { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, query, getDocs, limit } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+        
+        // Sæt log level (valgfrit, men godt til debugging)
+        // setLogLevel('debug');
+
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Definer globale variabler for online-tilstand
+        window.firebaseServices = {
+            db,
+            auth,
+            doc,
+            getDoc,
+            setDoc,
+            onSnapshot,
+            collection,
+            addDoc,
+            query,
+            getDocs,
+            limit,
+            appId,
+            userId: null // Sættes efter login
+        };
+
+        // Log ind
+        await signInWithCustomToken(auth, authToken);
+        
+        // Sæt userId efter succesfuldt login
+        const user = auth.currentUser;
+        if (user) {
+            window.firebaseServices.userId = user.uid;
+            // Kald init-funktionen (defineret nedenfor) for at starte appen
+            if (window.initApp) {
+                window.initApp(false); // false = ikke offline
+            }
+        } else {
+            throw new Error("Firebase login fejlede. Bruger ikke fundet.");
+        }
+
+    } catch (error) {
+        console.warn("Firebase initialisering fejlede:", error.message);
+        // Kald init-funktionen (defineret nedenfor) i offline-tilstand
+        if (window.initApp) {
+            window.initApp(true, error.message); // true = offline
+        }
+    }
+</script>
+
+
+<div class="app-container">
+    
+    <!-- Statusbjælke til loading, offline og fejl -->
+    <div id="status-bar" class="loading">Forbinder til database...</div>
+
+    <header>
+        <h1>LOMMEPENGE</h1>
+        <div class="week-selector">
+            <label for="week-input">UGE:</label>
+            <input type="number" id="week-input" value="1">
+        </div>
+    </header>
+
+    <main class="calendar-grid" id="calendar-grid-container">
+        <!-- Dage genereres af JavaScript -->
+    </main>
+
+    <footer>
+        <div class="summary-container">
+            <div class="summary-box" id="carl-bille-box">
+                <h3>Carl Bille</h3>
+                <div class="saldo">Ugesaldo: <span id="carl-bille-uge">20 kr.</span></div>
+                <div class="saldo total">Total Saldo: <span id="carl-bille-total">0 kr.</span></div>
+            </div>
+            <div class="summary-box" id="noah-box">
+                <h3>Noah</h3>
+                <div class="saldo">Ugesaldo: <span id="noah-uge">20 kr.</span></div>
+                <div class="saldo total">Total Saldo: <span id="noah-total">0 kr.</span></div>
+            </div>
+        </div>
+        <div class="log-controls">
+            <button class="btn btn-log" id="open-log-btn">Vis Log</button>
+        </div>
+    </footer>
+
+</div>
+
+<!-- Log Modal HTML -->
+<div id="log-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="close-log-btn">&times;</span>
+        <h2>Begivenhedslog</h2>
+        <ul id="log-list">
+            <li>Logger er tomme...</li>
+        </ul>
+    </div>
+</div>
+
+
+<script>
+    // VENT til hele DOM er klar
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- GLOBALE KONSTANTER OG VARIABLER ---
+        const WEEK_START_PAY = 20;
+        const DEDUCTION_AMOUNT = 5;
+        const NAMES = ["Carl Bille", "Noah"];
+        const DAYS_OF_WEEK = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag", "Søndag"];
+        // Grundskema for rotationen
+        const WEEKLY_ASSIGNMENTS = [
+            NAMES[0], // Man
+            NAMES[1], // Tirs
+            NAMES[0], // Ons
+            NAMES[1], // Tors
+            NAMES[0], // Fre
+            NAMES[1], // Lør
+            NAMES[0]  // Søn
+        ];
+
+        // UI Elementer
+        const weekInput = document.getElementById('week-input');
+        const gridContainer = document.getElementById('calendar-grid-container');
+        const statusBar = document.getElementById('status-bar');
+        
+        // Log Modal UI
+        const logModal = document.getElementById('log-modal');
+        const openLogBtn = document.getElementById('open-log-btn');
+        const closeLogBtn = document.getElementById('close-log-btn');
+        const logList = document.getElementById('log-list');
+
+        // Globale state-variabler
+        let currentWeekNumber = 1;
+        let totalBalance = { "Carl Bille": 0, "Noah": 0 };
+        let weekState = {}; // Holder styr på { dayIndex: "done"/"missed", assigned: "Navn" }
+        let isOffline = true; // Starter som offline, indtil Firebase bekræfter
+        let dbService = null; // Bliver sat til enten firebaseServices eller offlineService
+        let firebaseUnsubscribe = null; // Funktion til at stoppe Firebase-listener
+
+
+        // --- OFFLINE SERVICE (Lokal lagring) ---
+        // Dette objekt "ligner" Firebase, så resten af koden kan kalde de samme funktioner
+        const offlineService = {
+            stateDocRef: 'lommepengeState_v2_offline',
+            logCollectionRef: 'lommepengeLog_v2_offline',
+
+            async getState() {
+                console.log("OFFLINE: Henter state");
+                const data = localStorage.getItem(this.stateDocRef);
+                return data ? JSON.parse(data) : getInitialState();
+            },
+
+            async saveState(state) {
+                console.log("OFFLINE: Gemmer state");
+                localStorage.setItem(this.stateDocRef, JSON.stringify(state));
+            },
+
+            // Offline-tilstand har ikke real-time snapshot, så vi simulerer det
+            setupStateListener(callback) {
+                console.log("OFFLINE: 'Listener' sat op (simuleret)");
+                // Vi kalder den bare én gang med de gemte data
+                this.getState().then(callback);
+                // Returner en tom funktion, da der ikke er noget at "afmelde"
+                return () => {};
+            },
+
+            async addLogEntry(logData) {
+                console.log("OFFLINE: Gemmer log");
+                let logs = JSON.parse(localStorage.getItem(this.logCollectionRef) || '[]');
+                logs.unshift(logData); // Tilføj nyeste først
+                logs = logs.slice(0, 50); // Gem kun de seneste 50
+                localStorage.setItem(this.logCollectionRef, JSON.stringify(logs));
+            },
+
+            async getLogEntries() {
+                console.log("OFFLINE: Henter log");
+                return JSON.parse(localStorage.getItem(this.logCollectionRef) || '[]');
+            }
+        };
+        
+        // --- FIREBASE SERVICE (Online lagring) ---
+        const firebaseService = {
+            stateDocRef: null,
+            logCollectionRef: null,
+
+            async init(fs, appId, userId) {
+                // Sti til at gemme appens tilstand
+                const stateDocPath = `artifacts/${appId}/public/data/lommepengeState_v2/appState`;
+                this.stateDocRef = fs.doc(fs.db, stateDocPath);
+                
+                // Sti til at gemme log-hændelser
+                const logCollectionPath = `artifacts/${appId}/public/data/lommepengeLog_v2`;
+                this.logCollectionRef = fs.collection(fs.db, logCollectionPath);
+                console.log("ONLINE: Firebase Service initialiseret");
+            },
+
+            async getState() {
+                const fs = window.firebaseServices;
+                try {
+                    const docSnap = await fs.getDoc(this.stateDocRef);
+                    if (docSnap.exists()) {
+                        return docSnap.data();
+                    } else {
+                        console.warn("Firebase: Dokument ikke fundet, opretter nyt.");
+                        const initialState = getInitialState();
+                        await this.saveState(initialState);
+                        return initialState;
+                    }
+                } catch (error) {
+                    console.error("Fejl ved hentning af state:", error);
+                    // Hvis vi fejler her, er det kritisk. Gå i offline-tilstand.
+                    throw new Error("Fejl ved hentning af Firestore-dokument. " + error.message);
+                }
+            },
+
+            async saveState(state) {
+                const fs = window.firebaseServices;
+                // Vi bruger setDoc med merge:true for at oprette/overskrive sikkert
+                await fs.setDoc(this.stateDocRef, state, { merge: true });
+            },
+
+            setupStateListener(callback) {
+                const fs = window.firebaseServices;
+                console.log("ONLINE: Opsætter real-time listener...");
+                // onSnapshot lytter efter ændringer i real-time
+                const unsubscribe = fs.onSnapshot(this.stateDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        callback(docSnap.data());
+                    } else {
+                        console.warn("Listener: Dokument findes ikke. Opretter...");
+                        this.saveState(getInitialState()).then(() => {
+                            console.log("Listener: Nyt state-dokument oprettet.");
+                        });
+                    }
+                }, (error) => {
+                    console.error("Firebase listener fejlede:", error);
+                    // Håndter fejl - måske gå offline
+                    window.initApp(true, "Database-listener fejlede: " + error.message);
+                });
+                
+                return unsubscribe; // Returner funktionen til at stoppe med at lytte
+            },
+
+            async addLogEntry(logData) {
+                const fs = window.firebaseServices;
+                await fs.addDoc(this.logCollectionRef, logData);
+            },
+
+            async getLogEntries() {
+                const fs = window.firebaseServices;
+                // Byg en query til at hente de seneste 20 logs, sorteret efter timestamp
+                const q = fs.query(
+                    this.logCollectionRef,
+                    // fs.orderBy("timestamp", "desc"), // Vi springer orderBy over for at undgå index-fejl
+                    fs.limit(20)
+                );
+                
+                const querySnapshot = await fs.getDocs(q);
+                let logs = [];
+                querySnapshot.forEach((doc) => {
+                    logs.push(doc.data());
+                });
+                
+                // Sorter manuelt i JS, da vi ikke bruger orderBy i query
+                logs.sort((a, b) => b.timestamp - a.timestamp);
+                
+                return logs;
+            }
+        };
+        
+
+        // --- HJÆLPEFUNKTIONER ---
+
+        // Henter start-tilstand (hvis databasen er tom)
+        function getInitialState() {
+            const now = new Date();
+            const year = now.getFullYear();
+            // Simpel uge-beregning
+            const start = new Date(year, 0, 1);
+            const diff = (now - start + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000));
+            const oneDay = 1000 * 60 * 60 * 24;
+            const day = Math.floor(diff / oneDay);
+            const initialWeek = Math.ceil((day + start.getDay() + 1) / 7);
+
+            return {
+                currentWeekNumber: initialWeek,
+                totalBalance: { "Carl Bille": 0, "Noah": 0 },
+                weekState: {} // Tom uge-tilstand
+            };
+        }
+
+        // Opdaterer hele UI baseret på state
+        function updateUI(state) {
+            console.log("Opdaterer UI med state:", state);
+            
+            // Sæt globale variabler
+            currentWeekNumber = state.currentWeekNumber;
+            totalBalance = state.totalBalance || { "Carl Bille": 0, "Noah": 0 };
+            weekState = state.weekState || {};
+
+            // Opdater Uge-input
+            weekInput.value = currentWeekNumber;
+
+            // Opdater Kalender-gitter
+            gridContainer.innerHTML = ''; // Ryd gitter
+            DAYS_OF_WEEK.forEach((dayName, index) => {
+                
+                // Find dagens tilstand, eller opret en ny
+                let dayData = weekState[index];
+                if (!dayData) {
+                    // Tildel ansvarlig baseret på ugenummer (lige/ulige uge skifter)
+                    // const assignmentIndex = (currentWeekNumber % 2 === 0) ? 0 : 1; // Regel B
+                    // weekState[index] = { assigned: WEEKLY_ASSIGNMENTS[index], status: "pending" };
+                    
+                    // Regel A: Fast rotation (CB, N, CB, N...)
+                    const assigned = WEEKLY_ASSIGNMENTS[index] || "Fri";
+                    dayData = { assigned: assigned, status: "pending" };
+                    weekState[index] = dayData;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'day-card';
+                card.dataset.dayIndex = index;
+                
+                let nameClass = dayData.assigned.toLowerCase().replace(' ', '-');
+                if (dayData.assigned === "Fri") {
+                    card.classList.add('fri-day');
+                    nameClass = 'fri';
+                }
+                
+                card.innerHTML = `
+                    <h2>${dayName}</h2>
+                    <p class="assigned">Ansvarlig: 
+                        <span class="name-display ${nameClass}" data-day-index="${index}">${dayData.assigned}</span>
+                    </p>
+                    <div class="task-status">
+                        <button class="btn btn-done" data-status="done">Udført</button>
+                        <button class="btn btn-missed" data-status="missed">Misset</button>
+                        <button class="btn btn-reset" data-status="pending">Nulstil</button>
+                    </div>
+                `;
+                
+                gridContainer.appendChild(card);
+                updateCardVisuals(index, dayData.status);
+            });
+
+            // Opdater Saldo-bokse
+            calculateAndDisplayBalances();
+        }
+
+        // Opdaterer et enkelt dag-korts udseende
+        function updateCardVisuals(dayIndex, newStatus) {
+            const card = gridContainer.querySelector(`.day-card[data-day-index="${dayIndex}"]`);
+            if (!card) return;
+
+            card.classList.remove('status-done', 'status-missed');
+            if (newStatus === 'done') {
+                card.classList.add('status-done');
+            } else if (newStatus === 'missed') {
+                card.classList.add('status-missed');
+            }
+        }
+
+        // Beregner og viser saldo
+        function calculateAndDisplayBalances() {
+            let ugeSaldoCB = WEEK_START_PAY;
+            let ugeSaldoNoah = WEEK_START_PAY;
+
+            for (const dayIndex in weekState) {
+                const data = weekState[dayIndex];
+                if (data.status === 'missed') {
+                    if (data.assigned === "Carl Bille") {
+                        ugeSaldoCB -= DEDUCTION_AMOUNT;
+                    } else if (data.assigned === "Noah") {
+                        ugeSaldoNoah -= DEDUCTION_AMOUNT;
+                    }
+                }
+            }
+
+            document.getElementById('carl-bille-uge').textContent = `${ugeSaldoCB} kr.`;
+            document.getElementById('noah-uge').textContent = `${ugeSaldoNoah} kr.`;
+            
+            document.getElementById('carl-bille-total').textContent = `${totalBalance["Carl Bille"]} kr.`;
+            document.getElementById('noah-total').textContent = `${totalBalance["Noah"]} kr.`;
+        }
+
+        // Gemmer den nuværende tilstand (total saldo + uge)
+        async function saveCurrentState() {
+            if (isOffline) {
+                // I offline-tilstand gemmer vi hele app-tilstanden
+                await dbService.saveState({
+                    currentWeekNumber,
+                    totalBalance,
+                    weekState
+                });
+            } else {
+                // I online-tilstand sender vi kun de dele, der skal opdateres
+                // Dette forhindrer "race conditions", hvis to brugere er inde samtidig
+                await dbService.saveState({
+                    // currentWeekNumber opdateres kun ved ugeskift
+                    // totalBalance opdateres kun ved ugeskift
+                    weekState // Opdater kun uge-data
+                });
+            }
+        }
+        
+        // Logger en hændelse
+        async function logEvent(type, message, details = {}) {
+            const logData = {
+                type: type, // 'missed' eller 'corrected'
+                message: message,
+                details: details,
+                timestamp: Date.now()
+            };
+            
+            await dbService.addLogEntry(logData);
+        }
+
+        // --- EVENT HANDLERS ---
+
+        // Håndterer klik på knapper i kalenderen
+        async function handleGridClick(e) {
+            const target = e.target;
+            
+            // Håndter status-knap klik
+            if (target.matches('.btn[data-status]')) {
+                const card = target.closest('.day-card');
+                const dayIndex = card.dataset.dayIndex;
+                const newStatus = target.dataset.status; // "done", "missed", "pending"
+                
+                const oldStatus = weekState[dayIndex].status;
+                const assigned = weekState[dayIndex].assigned;
+                
+                if (oldStatus === newStatus) return; // Ingen ændring
+
+                // Logik for at logge hændelser
+                if (newStatus === 'missed') {
+                    // Log, at opgaven er misset
+                    await logEvent('missed', `${assigned} missede tjansen.`, {
+                        uge: currentWeekNumber,
+                        dag: DAYS_OF_WEEK[dayIndex]
+                    });
+                } else if (oldStatus === 'missed' && (newStatus === 'done' || newStatus === 'pending')) {
+                    // Log, at en "misset" opgave er blevet rettet
+                     await logEvent('corrected', `Rettelsetil 'misset' opgave (nu: ${newStatus}).`, {
+                        uge: currentWeekNumber,
+                        dag: DAYS_OF_WEEK[dayIndex],
+                        navn: assigned
+                    });
+                }
+
+                // Opdater den lokale state
+                weekState[dayIndex].status = newStatus;
+                
+                // Opdater UI med det samme for responsivitet
+                updateCardVisuals(dayIndex, newStatus);
+                calculateAndDisplayBalances();
+                
+                // Gem den nye state til databasen
+                await saveCurrentState();
+            }
+            
+            // Håndter klik på navn (byt ansvarlig)
+            if (target.matches('.name-display')) {
+                const dayIndex = target.dataset.dayIndex;
+                const currentAssigned = weekState[dayIndex].assigned;
+                
+                if (currentAssigned === "Fri") return; // Kan ikke bytte "Fri"
+
+                // Find det "andet" navn
+                const newAssigned = (currentAssigned === NAMES[0]) ? NAMES[1] : NAMES[0];
+                
+                // Opdater lokal state
+                weekState[dayIndex].assigned = newAssigned;
+                
+                // Opdater UI
+                const nameClass = newAssigned.toLowerCase().replace(' ', '-');
+                target.textContent = newAssigned;
+                target.className = `name-display ${nameClass}`;
+                
+                // Da ansvarlig er ændret, skal saldoen genberegnes
+                calculateAndDisplayBalances(); 
+                
+                // Gem state
+                await saveCurrentState();
+            }
+        }
+
+        // Håndterer skift af uge
+        async function handleWeekChange(e) {
+            const newWeek = parseInt(e.target.value, 10);
+            if (isNaN(newWeek) || newWeek === currentWeekNumber) {
+                return; // Ingen ændring
+            }
+
+            console.log(`Skifter fra uge ${currentWeekNumber} til ${newWeek}`);
+
+            // 1. Beregn og afslut den "gamle" uge
+            let ugeSaldoCB = WEEK_START_PAY;
+            let ugeSaldoNoah = WEEK_START_PAY;
+
+            for (const dayIndex in weekState) {
+                const data = weekState[dayIndex];
+                if (data.status === 'missed') {
+                    if (data.assigned === "Carl Bille") {
+                        ugeSaldoCB -= DEDUCTION_AMOUNT;
+                    } else if (data.assigned === "Noah") {
+                        ugeSaldoNoah -= DEDUCTION_AMOUNT;
+                    }
+                }
+            }
+            
+            // 2. Læg ugesaldo til total saldo
+            const newTotalBalance = {
+                "Carl Bille": totalBalance["Carl Bille"] + ugeSaldoCB,
+                "Noah": totalBalance["Noah"] + ugeSaldoNoah
+            };
+
+            // 3. Forbered den nye state
+            const newState = {
+                currentWeekNumber: newWeek,
+                totalBalance: newTotalBalance,
+                weekState: {} // Nulstil uge-data
+            };
+            
+            // 4. Gem den komplette nye state til databasen
+            await dbService.saveState(newState);
+
+            // 5. Opdater UI (bliver automatisk kaldt af listener i online-tilstand,
+            // men vi kalder den manuelt i offline-tilstand)
+            if (isOffline) {
+                updateUI(newState);
+            }
+            // I online-tilstand vil onSnapshot automatisk fange ændringen og kalde updateUI.
+        }
+
+        // Åbn/luk log modal
+        async function openLog() {
+            logModal.style.display = 'block';
+            logList.innerHTML = '<li>Henter log...</li>';
+            
+            try {
+                const logs = await dbService.getLogEntries();
+                logList.innerHTML = ''; // Ryd listen
+                
+                if (logs.length === 0) {
+                    logList.innerHTML = '<li>Logbogen er tom.</li>';
+                    return;
+                }
+                
+                logs.forEach(log => {
+                    const li = document.createElement('li');
+                    const date = new Date(log.timestamp).toLocaleString('da-DK', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    li.className = log.type === 'missed' ? 'log-missed' : 'log-corrected';
+                    
+                    li.innerHTML = `
+                        <span class="log-time">${date} - Uge ${log.details.uge}</span>
+                        ${log.message}
+                    `;
+                    logList.appendChild(li);
+                });
+                
+            } catch (error) {
+                console.error("Fejl ved hentning af log:", error);
+                logList.innerHTML = `<li>Kunne ikke hente log: ${error.message}</li>`;
+            }
+        }
+        function closeLog() {
+            logModal.style.display = 'none';
+        }
+
+
+        // --- INITIALISERING ---
+        
+        // Denne globale funktion kaldes af Firebase-loaderen (i <head>)
+        // enten når login er succes, eller hvis det fejler.
+        window.initApp = (offline, errorMsg = null) => {
+            isOffline = offline;
+
+            if (isOffline) {
+                console.warn("Starter i OFFLINE-TILSTAND.");
+                statusBar.textContent = "OFFLINE-TILSTAND: Data gemmes kun lokalt på denne enhed.";
+                if (errorMsg) {
+                    statusBar.textContent = `OFFLINE: ${errorMsg}`;
+                }
+                statusBar.className = 'offline';
+                dbService = offlineService;
+            } else {
+                console.log("Starter i ONLINE-TILSTAND.");
+                statusBar.textContent = "Online - Forbundet til database.";
+                statusBar.className = 'loading'; // Midlertidig
+                
+                const fs = window.firebaseServices;
+                dbService = firebaseService;
+                dbService.init(fs, fs.appId, fs.userId);
+            }
+
+            // Stop den gamle listener, hvis den findes
+            if (firebaseUnsubscribe) {
+                firebaseUnsubscribe();
+            }
+
+            try {
+                // Sæt den nye listener op (enten offline eller online)
+                firebaseUnsubscribe = dbService.setupStateListener((state) => {
+                    if (state) {
+                        updateUI(state);
+                        statusBar.style.display = 'none'; // Skjul status, når data er loadet
+                        if (isOffline) {
+                            statusBar.style.display = 'block'; // Men behold den i offline
+                        }
+                    } else {
+                        // Dette sker, hvis dokumentet ikke findes (f.eks. første kørsel)
+                        console.log("Intet state fundet, initialiserer...");
+                        const initialState = getInitialState();
+                        dbService.saveState(initialState).then(() => {
+                            updateUI(initialState);
+                        });
+                    }
+                });
+            } catch (error) {
+                // Denne fanger fejl, hvis f.eks. onSnapshot fejler pga. rettigheder
+                console.error("Kritisk fejl under opsætning af listener:", error);
+                statusBar.textContent = `FEJL: Kunne ikke læse data. ${error.message}`;
+                statusBar.className = 'error';
+            }
+
+            // Tilføj Event Listeners (kun én gang)
+            gridContainer.removeEventListener('click', handleGridClick); // Fjern først for en sikkerheds skyld
+            gridContainer.addEventListener('click', handleGridClick);
+            
+            weekInput.removeEventListener('change', handleWeekChange);
+            weekInput.addEventListener('change', handleWeekChange);
+
+            openLogBtn.onclick = openLog;
+            closeLogBtn.onclick = closeLog;
+            window.onclick = (event) => {
+                if (event.target == logModal) {
+                    closeLog();
+                }
+            };
+        };
+        
+        // Hvis Firebase-scriptet af en eller anden grund slet ikke kører
+        // (f.eks. blokeret af en extension), så start offline efter 3 sek.
+        setTimeout(() => {
+            if (!dbService) {
+                console.warn("Timeout: Firebase loadede ikke. Tvinger offline-tilstand.");
+                window.initApp(true, "Timeout: Kunne ikke forbinde til database.");
+            }
+        }, 3000);
+
+    });
+</script>
+
+
+</body>
+</html>
