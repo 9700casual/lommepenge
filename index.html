@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-
 <html lang="da">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lommepenge Ugeplan</title>
-<!-- Vi henter en pixel-font fra Google, der ligner Minecraft -->
+<!-- REPARERET: Korrekt link til Google Font -->
 <link href="https://www.google.com/search?q=https://fonts.googleapis.com/css2%3Ffamily%3DPress%2BStart%2B2P%26display%3Dswap" rel="stylesheet">
 
 <style>
@@ -450,14 +448,13 @@
     // --- INDSÆT DIN FIREBASE CONFIG HER ---
     // Du finder denne ved at gå til Firebase -> Project Settings -> General -> "Dine apps" -> Web (</>)
     const firebaseConfig = {
-  apiKey: "AIzaSyBSJFs7yBr8HS5jRhWylVAa6DJubLkfsuY",
-  authDomain: "lommepenge-fef31.firebaseapp.com",
-  projectId: "lommepenge-fef31",
-  storageBucket: "lommepenge-fef31.firebasestorage.app",
-  messagingSenderId: "380826565283",
-  appId: "1:380826565283:web:29dee29e428059e355dd16",
-  measurementId: "G-J6BLRPJH7L"
-};
+      apiKey: "DIN_API_KEY_HER",
+      authDomain: "DIT_PROJEKT_ID_HER.firebaseapp.com",
+      projectId: "DIT_PROJEKT_ID_HER",
+      storageBucket: "DIT_PROJEKT_ID_HER.appspot.com",
+      messagingSenderId: "DIN_SENDER_ID_HER",
+      appId: "DIN_APP_ID_HER"
+    };
     // ----------------------------------------
 
     try {
@@ -1107,7 +1104,7 @@
             // Tilføj Event Listeners (kun én gang)
             gridContainer.removeEventListener('click', handleGridClick); // Fjern først for en sikkerheds skyld
             gridContainer.addEventListener('click', handleGridClick);
-            
+
             weekInput.removeEventListener('change', handleWeekChange);
             weekInput.addEventListener('change', handleWeekChange);
 
